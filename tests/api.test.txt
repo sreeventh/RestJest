@@ -1,0 +1,54 @@
+import request from 'supertest';
+import { jest } from '@jest/globals';
+import app from '../server.js';
+
+// Mock the User model
+const mockUser = {
+    create: jest.fn(),
+    getAll: jest.fn(),
+    findById: jest.fn(),
+    updateById: jest.fn(),
+    remove: jest.fn(),
+    removeAll: jest.fn()
+};
+
+// Mock the module where User is exported
+jest.unstable_mockModule('../models/user.model.js', () => ({
+    default: mockUser
+}));
+
+// Import the mocked module after jest.unstable_mockModule
+const { default: User } = await import('../models/user.model.js');
+
+describe('User Controller', () => {
+
+    // Tests for the findAll function
+    describe('GET /users', () => {
+        it('should retrieve all users', async () => {
+            const users = [
+                {
+                    "id": 1,
+                    "name": "sree"
+                },
+                {
+                    "id": 17,
+                    "name": "sree"
+                }
+            ];
+
+            // Mock the getAll function to return the users array
+            User.getAll.mockImplementationOnce((callback) => {
+                callback(null, users);
+            });
+
+            // Make the GET request to /users
+            const res = await request(app).get('/users');
+
+            // Assert that the status code is 200
+            expect(res.statusCode).toBe(200);
+
+            // Assert that the response body matches the expected users array
+            expect(res.body).toEqual(users);
+        });
+    });
+});
